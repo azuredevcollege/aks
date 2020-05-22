@@ -212,10 +212,50 @@ kubectl get service -n aspnetcore-demo-api
 Open your browser, paste the IP address and test the API.
 
 
+## Deploy the ASP.NET MVC Demo Application to your cluster
 
+In this part of the repository we deploy an ASP.NET MVC application to our cluster. The application uses .NET Framewrok 4.8.
+To have a good demo scenario, we deploy multiple instances of the application into one Kubernetes namespace. Each instance represents a customer of our application. To route traffic to the right instance we use NGINX ingress controller and a unique hostname per customer. 
+You can either use your own Azure DNS Zone, if you have one or you can create a free [noip](https://noip.com) account to manage your hostnames.
 
+### Install NGNIX Ingress Controller
 
+As in the previous part of this repository we create a Kubernetes namespace an install NGINX ingress using helm.
 
+```Shell
+# create namespace
+kubectl create namespace aspnet-application
+# Add the official stable repository
+helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+
+# Use Helm to deploy an NGINX ingress controller
+helm install nginx-ingress-aspnet stable/nginx-ingress \
+    --namespace aspnet-application \
+    --set rbac.create=true \
+    --set controller.replicaCount=2 \
+    --set controller.nodeSelector."beta\.kubernetes\.io/os"=linux \
+    --set controller.service.externalTrafficPolicy=Local \
+    --set controller.scope.enabled=true \
+    --set controller.scope.namespace=aspnetapplication \
+    --set defaultBackend.nodeSelector."beta\.kubernetes\.io/os"=linux
+```
+
+### Deploy an instance of the ASP.NET Application per customer
+
+The Docker image for the ASP.NET Application is already built. Is uses the __mcr.microsoft.com/dotnet/framewrok/aspnet:4.8-windowsservercore-ltsc2019__ base image where an IIS is already installed and prepared. Take a look at the Docker file [here](./apps/AspnetWebApplication/AspnetWebApplication/Dockerfile) to see how it is built. 
+
+The [deployment folder](./deploy) contains already all needed yaml files to deploy two instances of the application.
+All you have to do is to replace your customer's domain name for each ingress definition ([customer1](./deploy/win-aspnet-application-customer1-ingress.yaml), [customer2](./deploy/win-aspnet-application-customer2-ingress.yaml)). The placeholder is __<CUSTOMER_DOMAIN>__, please replace it with your dns names.
+
+```Shell
+# Deploy the instances
+kubectl apply -f ./win-aspnet-application-customer1-deployment.yaml -n aspnet-application \ 
+kubectl apply -f ./win-aspnet-application-customer2-deployment.yaml -n aspnet-application \
+kubectl apply -f ./win-aspnet-application-customer1-service.yaml -n aspnet-application \
+kubectl apply -f ./win-aspnet-application-customer2-service.yaml -n aspnet-application \
+kubectl apply -f ./win-aspnet-application-customer1-ingress.yaml -n aspnet-application \
+kubectl apply -f ./win-aspnet-application-customer2-ingress.yaml -n aspnet-application 
+```
 
 
 
