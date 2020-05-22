@@ -1,7 +1,6 @@
 # Get started with Windows Containers on AKS
 
 This repository shows you how you get started running Windows Containers on AKS.
-<<<<<<< HEAD
 The Azure Documentation [here](https://docs.microsoft.com/azure/aks/windows-container-cli) is a good starting point.
 
 ## Default node pool
@@ -15,7 +14,7 @@ There is always one default node ppol deployed. The default node pool can not be
 
 ## Overview
 
-In this repository you will see how you create an AKS Cluster with an additional node pool based on OS type Windows.
+In this repository you will see how to create an AKS Cluster with an additional node pool based on OS type Windows.
 First we will deploy a simple ASP.NET Core API on the Windows node pool and use NGINX as an Ingress Contoller.
 After that we will deploy an ASP.NET WebApplication on the Windows node pool and use NGINX as an Ingress Controller.
 
@@ -27,11 +26,7 @@ az group create --resource-group myRG --location eastus2
 
 ### Create an AKS Cluster
 
-<<<<<<< HEAD
 An AKS Cluster supports a node pool for Windows only, if the [Azure CNI](https://docs.microsoft.com/azure/aks/concepts-network#azure-cni-advanced-networking) network policy is active. Of course you can integrate your Cluster in your VNET, but to keep it simple for the moment we don't integrate the Cluster into your network.
-=======
-An AKS Cluster supports node pool for Windows only, if the [Azure CNI](https://docs.microsoft.com/azure/aks/concepts-network#azure-cni-advanced-networking) network policy is active. Of course you can integrate your Cluster in your VNET, but to keep it simple for the moment we don't integrate the Cluster into your network.
->>>>>>> master
 
 #### Azure CLI
 Before we create the cluster, make sure you have the latest Azure CLI intsalled on your system. [Here](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest) you can find the installation guides.
