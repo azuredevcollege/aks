@@ -1,10 +1,17 @@
 # Get started with Windows Containers on AKS
 
 This repository shows you how you get started running Windows Containers on AKS.
+<<<<<<< HEAD
+The Azure Documentation [here](https://docs.microsoft.com/azure/aks/windows-container-cli) is a good starting point.
+
+## Default node pool
+There is always one default node pool deployed. The default node pool can not be delete. The default node pool is based on linux.
+=======
 The Azure Dcoumentation [here](https://docs.microsoft.com/azure/aks/windows-container-cli) is a good starting point.
 
 ## Default node pool
 There is always one default node ppol deployed. The default node pool can not be delete. The default node pool is based on linux.
+>>>>>>> master
 
 ## Overview
 
@@ -20,7 +27,11 @@ az group create --resource-group myRG --location eastus2
 
 ### Create an AKS Cluster
 
+<<<<<<< HEAD
+An AKS Cluster supports a node pool for Windows only, if the [Azure CNI](https://docs.microsoft.com/azure/aks/concepts-network#azure-cni-advanced-networking) network policy is active. Of course you can integrate your Cluster in your VNET, but to keep it simple for the moment we don't integrate the Cluster into your network.
+=======
 An AKS Cluster supports node pool for Windows only, if the [Azure CNI](https://docs.microsoft.com/azure/aks/concepts-network#azure-cni-advanced-networking) network policy is active. Of course you can integrate your Cluster in your VNET, but to keep it simple for the moment we don't integrate the Cluster into your network.
+>>>>>>> master
 
 #### Azure CLI
 Before we create the cluster, make sure you have the latest Azure CLI intsalled on your system. [Here](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest) you can find the installation guides.
