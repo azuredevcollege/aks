@@ -5,12 +5,6 @@ The Azure Documentation [here](https://docs.microsoft.com/azure/aks/windows-cont
 
 ## Default node pool
 There is always one default node pool deployed. The default node pool can not be delete. The default node pool is based on linux.
-=======
-The Azure Dcoumentation [here](https://docs.microsoft.com/azure/aks/windows-container-cli) is a good starting point.
-
-## Default node pool
-There is always one default node ppol deployed. The default node pool can not be delete. The default node pool is based on linux.
->>>>>>> master
 
 ## Overview
 
