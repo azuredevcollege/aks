@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: win-aspnetcore-echo-api
+  labels:
+    app: win-aspnetcore-echo-api
+spec:
+  ports:
+  - port: 80
+    targetPort: 5000
+  selector:
+    app: win-aspnetcore-echo-api
