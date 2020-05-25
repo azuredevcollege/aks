@@ -1,0 +1,22 @@
+apiVersion: apps/v1beta2
+kind: DaemonSet
+metadata:
+  name: prepull
+spec:
+  selector:
+    matchLabels:
+      name: prepull 
+  template:
+    metadata:
+      labels:
+        name: prepull 
+    spec:
+      initContainers:
+      - name: prepull 
+        image: m009/aspnet-webapplication:0.1
+        args:
+          - powershell
+          - inetpub/wwwroot/Start-PrepullImage.ps1
+      containers:
+      - name: pause
+        image: gcr.io/google_containers/pause

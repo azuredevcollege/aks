@@ -1,0 +1,1 @@
+Write-Host "Image loaded sucessfully"
