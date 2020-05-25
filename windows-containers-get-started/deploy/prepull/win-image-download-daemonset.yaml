@@ -1,0 +1,24 @@
+apiVersion: apps/v1beta2
+kind: DaemonSet
+metadata:
+  name: prepull
+spec:
+  selector:
+    matchLabels:
+      name: prepull 
+  template:
+    metadata:
+      labels:
+        name: prepull 
+    spec:
+      initContainers:
+      - name: prepull 
+        image: m009/aspnet-webapplication:0.2
+        command: [powershell]
+        args:
+          - c:/inetpub/wwwroot/Start-PrepullImage.ps1
+      containers:
+      - name: pause
+        image: mcr.microsoft.com/k8s/core/pause:1.0.0
+      nodeSelector:
+        beta.kubernetes.io/os: windows
