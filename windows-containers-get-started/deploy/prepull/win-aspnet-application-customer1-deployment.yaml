@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: aspnetapplication-customer1
+  labels:
+    app: aspnetapplication-customer1
+spec:
+  replicas: 1
+  selector: 
+    matchLabels:
+      app: aspnetapplication-customer1
+  template:
+    metadata:
+      labels:
+        app: aspnetapplication-customer1
+    spec:
+      containers:
+        - name: aspnetapplication-customer1
+          image: m009/aspnet-webapplication:0.2
+          command: [powershell]
+          args:
+            - c:/inetpub/wwwroot/Start-Application.ps1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          resources:
+            limits: 
+              memory: 500Mi
+              cpu: 0.5
+            requests:
+              memory: 250Mi
+              cpu: 0.2
+      nodeSelector:
+        beta.kubernetes.io/os: windows
+          
