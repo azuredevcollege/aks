@@ -1,0 +1,16 @@
+{
+  "name": "express-monitoring-demo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "",
+  "author": "Christian Dennig / MS",
+  "license": "MIT",
+  "scripts": {
+    "start": "node src/main.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "prom-client": "^11.5.3",
+    "prometheus-api-metrics": "^2.2.5"
+  }
+}
