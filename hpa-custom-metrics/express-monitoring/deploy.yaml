@@ -1,0 +1,69 @@
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: promdemo 
+  labels:
+    application: promtest
+    service: api
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 5
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      application: promtest
+      service: api
+  template:
+    metadata:
+      labels:
+        application: promtest
+        service: api
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: application
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          image: csaocpger/expressmonitoring:4.3
+          imagePullPolicy: IfNotPresent
+          ports:
+          - containerPort: 4000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: promdemo
+  labels:
+    application: promtest
+spec:
+  ports:
+  - name: http
+    port: 4000
+    targetPort: 4000
+  selector:
+    application: promtest
+    service: api
+  type: LoadBalancer
+---
+kind: ServiceMonitor
+apiVersion: monitoring.coreos.com/v1
+metadata:
+  name: promtest
+  labels:
+    application: promtest
+spec:
+  selector:
+    matchLabels:
+      application: promtest
+  endpoints: 
+  - port: http
