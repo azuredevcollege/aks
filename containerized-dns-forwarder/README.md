@@ -32,7 +32,7 @@ More details are available on [https://github.com/whiteducksoftware/az-dns-forwa
 
 ### Get started on Kubernetes
 
-You need make sure that all needed private Azure DNS zones are linked to the virtual network used for AKS. Without this the DNS forwarder will not be able to resolve them.
+You need to make sure that all needed private Azure DNS zones are linked to the virtual network used for AKS. Without this the DNS forwarder will not be able to resolve them.
 
 ```
 kubectl apply -f https://raw.githubusercontent.com/whiteducksoftware/az-dns-forwarder/master/deploy.yaml
