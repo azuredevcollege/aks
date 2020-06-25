@@ -9,4 +9,4 @@ Consider this as a constant "work-in-progress" repository.
 - [Getting started with Windows Containers on AKS](windows-containers-get-started/README.md)
 - [Horizontal Autoscaling with Custom Metrics](hpa-custom-metrics/README.md)
 - [Create a Rook-Ceph storage cluster in AKS](rook-ceph/README.md)
-- [Containerized DNS forwarder to resolved Azure ressources from outside the network](containerized-dns-forwarder/README.md)
+- [Containerized DNS forwarder to resolve Azure resources from outside the network](containerized-dns-forwarder/README.md)
