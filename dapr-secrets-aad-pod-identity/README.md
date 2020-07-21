@@ -1,18 +1,101 @@
-# Access Azure KeyVault using dapr secrets and aad-pod-identity
+# Access Azure KeyVault using dapr secretstore and aad-pod-identity
 
-Setup an AKS Cluster with --enabled-managed-identity
+In this article I want to show you how you can access secrets that are stored in Azure KeyVault using aad-pod-identity and dapr. Azure KeyVault allows you to store application secrets centralized and control their distribution. Azure Key Vault reduces the chances that secrets my be accidently leaked. When using Azure Key Vault, application developer no longer need to store secrets in the application or application configuration. 
+For example, an application may need to connect to a database. Instead of storing the connection string in the app's code, you can store it securely in Key Vault. 
+Application developer can access secrets using the Azure Key Vault's API providing a valid identity token. A token can be acquired using either Azure Managed identity or a service principal. 
+Instead of managing an Azure AD's service principal I prefer using a managed identity. A managed identity for Azure resources is a feature of Azure Active Directory. With this feature you don't need to manage credentials anymore. If you want to get more insights about Azure managed identities have a look [here](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview). 
+An Azure managed identity is an Azure resource that you can create within a resource group. You can assign RBAC roles to access Azure resources on behalf-of the managed identity. For example, you can assign get and list rights to allow a managed identity to access an Azure Key Vault's secrets. Within your code you can acquire a token on behalf-of the managed identity and access the Key Vault programmmatically. 
+[Aad-pod-identity](https://github.com/Azure/aad-pod-identity) is a Kubernetes controller that allows you to assign an Azure managed identity to a Kubernetes pod or deployment. With this assignment it is possible within your application code to get a token by calling the Managed identity service endpoint. Dapr secretstore even go one step further. The dapr sidecar allows you to read secrets from an Azure Key Vault without acquiring a token. If you define a dapr secretstore component, dapr does invoke the managed identity service endpoint to acquire a token to access the Azure Key Vault. All you need to do is to specify the Key Vault's URI. 
+
+```yaml
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: azurekeyvault
+spec:
+  type: secretstores.azure.keyvault
+  metadata:
+  - name: vaultName
+    value: mykeyvault.vault.azure.ne
+```
+The aad-pod-identity controller ensures that a managed identity can be assigned to your pod or deployment. It ensures that each call to the managed identity endpoint (MSI endpoint) is redirected to the aad-pod-identity's Node Managed Identity. Node Managed Identity is a daemon set deployed to the Kubernetes cluster. It forwards the request to the aad-pod-identity's Managed Identity Controller to query the managed identity to use for the pod or deployment and returns a token. All you need to to ds to specify a Kubernetes resource that describes your managed identity to use and a binding to assign the identity to your pod or deployment.
+
+__AzureIdentity__ resource:
+```yaml
+apiVersion: "aadpodidentity.k8s.io/v1"
+kind: AzureIdentity
+metadata:
+  name: myidentityname
+spec:
+  type: 0
+  resourceID: <managed identity's resource id>
+  clientID: <managed identity's client id>
+```
+
+__AzureIdentityBinding__ resource:
+```yaml
+apiVersion: "aadpodidentity.k8s.io/v1"
+kind: AzureIdentityBinding
+metadata:
+  name: myidentityname-binding
+spec:
+  azureIdentity: myidentityname
+  selector: myidentityname
+```
+
+At the end, the only thing you need is to assign a deployment or pod to an AzureIdentity. The AzureIdentityBinding defines a selector that must be used as a label in the deployment or pod:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo
+  labels:
+    aadpodidbinding: myidentityname
+```
+
+## Demo scenario overview
+
+In the demo scenario we deploy a simple application that returns secrets stored in an Azure KeyVault. We use an Azure managed identity that has read access to an Azure Key Vault instance and the instance is accessed on behalf-of the managed identity. As we don't want to acquire a token in our code, we use a dapr secretstore component and invoke the dapr sidecar container to query the Azure Key Vault. Acquiring a token is done by calling the managed identity service endpoint that is controlled by aad-pod-identity.
+
+![Overview](./images/overview.png)
+
+## Create a resource group
+
+All resources are deployed to a resource group that we have to create first:
+
+```Shell
+az group create -n $RESOURCE_GROUP -l $RESOURCE_LOCATION
+```
+
+## Setup an AKS cluster
+
+Before we can deploy the components to an AKS cluster we need to setup an AKS Cluster with --enabled-managed-identity. I want to show you aad-pod-identity and dapr secretsstore with an AKS cluster that uses a managed identity. An AKS cluster requires an identity to create additional resources like load balancer, public IP, etc. This identity can either be a managed identity or a service principal. If we use a managed identity, the identity will be created for you. As described above, using a managed identity is the better choice, because you don't have to manage the a service prinicpal which must be renewed to keep the cluster working. 
 
 ## Variables
+
+Before we start, we need a set of variables:
 
 ```Shell
 export SUBSCRIPTION_ID=<your subscription id>
 export RESOURCE_GROUP=<your AKS resource group name>
+export RESOURCE_LOCATION=<your azure region>
 export IDENTITY_NAME=<your managed identity name>
 export KEYVAULT_NAME=<your keyvault name>
 export CLUSTER_NAME=<your AKS Cluster name>
 ```
 
+Now, we can create the AKS cluster:
+
+```
+az aks create -n $CLUSTER_NAME -g $RESOURCE_GROUP --enable-managed-identity
+```
+
+When your cluster is created, check the managed cluster resource group. There is a managed identity named $CLUSTER_NAME-agentpool. 
+
 ## Create a managed identity
+
+Next, we create a managed identity that is used to access an Azure Key Vault later:
 
 ```Shell
 az identity create -g $RESOURCE_GROUP -n $IDENTITY_NAME --subscription $SUBSCRIPTION_ID
@@ -23,21 +106,14 @@ export IDENTITY_OBJECT_ID="$(az ad sp show --id $IDENTITY_CLIENT_ID --query obje
 
 ## Assign 'Managed Identity Operator' role to Kubernetes ServicePrincipal
 
-Now we need to give the AKS Cluster's service principal rights to operate on the created managed identity.
-
-If your AKS cluster is deployed with __managed identity enabled__, do the following to get your principal id:
+Now we need to give the AKS Cluster's managed identity rights to operate on the created managed identity.
+Do the following to get your principal id:
 
 ```Shell
 export AKS_CLIENT_ID=$(az aks show -n $CLUSTER_NAME -g $RESOURCE_GROUP --query identityProfile.kubeletidentity.clientId -otsv)
 ```
 
-If you have an AKS Cluster deployed __without managed identity enabled__, do the following to get the principal id:
-
-```Shell
-export AKS_CLIENT_ID=$(az aks show -n $CLUSTER_NAME -g $RESOURCE_GROUP --query servicePrincipalProfile.clientId -otsv)
-```
-
-After that we can assign the *Managed Identity Operator* role to the AKS Cluster's principal for the managed identity:
+After that we can assign the *Managed Identity Operator* role to the AKS Cluster's principal for the managed identity scope:
 
 ```Shell
 az role assignment create --assignee $AKS_CLIENT_ID --role "Managed Identity Operator" --scope /subscriptions/$SUBSCRIPTION_ID/resourcegroups/$RESOURCE_GROUP/providers/Microsoft.ManagedIdentity/userAssignedIdentities/$IDENTITY_NAME
@@ -56,8 +132,7 @@ az role assignment create --role "Virtual Machine Contributor" --assignee $AKS_C
 
 ## Install aad-pod-identity using helm
 
-Now everything is prepared to setup aad-pod-identity using helm. In this demo we create a namespace for the aad-pod-identity's operator and daemon set to separate them
-from our application:
+Now everything is prepared to setup aad-pod-identity using helm. In this demo we create a namespace for the aad-pod-identity's operator and daemon set to separate them from our application:
 
 Create a namspace:
 ```
@@ -148,7 +223,7 @@ kubectl get pods --namespace dapr-system
 
 ## Deploy the sample application
 
-To let dapr know which Azure key vault is used, a dapr secret component must be deployed.
+To let dapr know which Azure key vault is used, a dapr secretstore component must be deployed.
 
 ```yaml
 apiVersion: dapr.io/v1alpha1
