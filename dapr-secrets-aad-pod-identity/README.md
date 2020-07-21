@@ -184,6 +184,16 @@ Check and validate the output of the validation pod:
 kubectl logs demo -n dapr-secrets
 ```
 
+**Note** As we use an Azure managed identity that can access an Azure Key Vault only, the demo image returns an error when it tries to list VMs:
+```Text
+level=error msg="failed list all vm compute.VirtualMachinesClient#List: Failure responding to request: StatusCode=403 -- Original Error: autorest/azure: Service returned an error. Status=403 Code=\"AuthorizationFailed\" Message=\"The client '<id>' with object id '<id>' does not have authorization to perform action 'Microsoft.Compute/virtualMachines/read' over scope '/subscriptions/<subscription id>/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Compute' or the scope is invalid. If access was recently granted, please refresh your credentials.\"" podip=<pod ip> podname=demo podnamespace=demo
+```
+Please check the logs if a token was acquired sucessfully:
+```Text
+level=info msg="succesfully acquired a token using the MSI, msiEndpoint(http://169.254.169.254/metadata/identity/oauth2/token)" podip=<pod ip> podname=demo podnamespace=demo
+level=info msg="succesfully acquired a token, userAssignedID MSI, msiEndpoint(http://169.254.169.254/metadata/identity/oauth2/token) clientID(<client id>)" podip=<pod ip> podname=demo podnamespace=demo
+```
+
 ## Create an Azure key vault
 
 Create an Azure key vault instance in your resource group and assign needed policies to get and list secrets on behalf-of the managed identity:
