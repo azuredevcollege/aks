@@ -134,6 +134,12 @@ az role assignment create --role "Virtual Machine Contributor" --assignee $AKS_C
 
 Now everything is prepared to setup aad-pod-identity using helm. In this demo we create a namespace for the aad-pod-identity's operator and daemon set to separate them from our application:
 
+Get admin credentials:
+
+```shell
+az aks get-credentials -n $CLUSTER_NAME -g $RESOURCE_GROUP
+```
+
 Create a namspace:
 ```
 kubectl create namespace aad-pod-identity
@@ -151,7 +157,7 @@ helm install aad-pod-identity aad-pod-identity/aad-pod-identity --namespace aad-
 The sample application is deployed in its own namespace. To request an access token to access Azure resources from a pod, we need to deploy two Kubernetes Resources.
 __AzureIdentity__ is the resource to link to an existing Azure managed identity. To specify which managed identity a Pod should use to acquire an access token a selector that specifies the binding must be added to the pod. __AzureIdentityBinding__ defines the name of the selector and the binding to an __AzureIdentity__.
 
-Open the files [keyvault-azure-identity.yaml](./deploy/keyvault-azure-identity.yaml) and [keyvault-azure-identitybinding.yaml](./deploy/keyvault-azure-identitybinding.yaml) and replace the *$* marked values with your values.
+Open the files [keyvault-azure-identity.yaml](./deploy/keyvault-azure-identity.yaml) and [keyvault-azure-identitybinding.yaml](./deploy/keyvault-azure-identitybinding.yaml) located in the _deploy_ folder and replace the *$* marked values with your values.
 
 Create a namespace for the demo application,
 
@@ -163,7 +169,7 @@ and apply the yaml files:
 
 ```
 kubectl apply -f keyvault-azure-identity.yaml -n dapr-secrets
-kubectl apply keyvault-azure-identitybinding.yaml -n dapr-secrets
+kubectl apply -f keyvault-azure-identitybinding.yaml -n dapr-secrets
 ```
 
 Aad-pod-identity provides a simple demo image to validate your setup. Open the file [validate-identity-pod.yaml](./deploy/validate-identity-pod.yaml),replace the *$* marked values with your values and deploy the pod.
@@ -175,7 +181,7 @@ kubectl apply -f validate-identity-pod.yaml -n dapr-secrets
 Check and validate the output of the validation pod:
 
 ```Shell
-kubectl logs demo -n dapr-secret
+kubectl logs demo -n dapr-secrets
 ```
 
 ## Create an Azure key vault
@@ -273,7 +279,7 @@ spec:
 Open the [dapr-azure-keyvault-secretstore component file](./deploy/dapr-azure-keyvault-secretstore.yaml) replace the $ marked value and deploy it to your cluster:
 
 ```
-kubectl apply -f dapr-azure-keyvault-secretstore component -n dapr-secrets
+kubectl apply -f dapr-azure-keyvault-secretstore.yaml -n dapr-secrets
 ```
 
 Open the [api-aspnetcore-deployment file ](./deploy/api-aspnetcore-deployment.yaml) replace the $ marked value and deploy it to your cluster:
