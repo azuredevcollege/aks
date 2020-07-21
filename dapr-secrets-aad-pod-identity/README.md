@@ -18,7 +18,7 @@ spec:
   - name: vaultName
     value: mykeyvault.vault.azure.ne
 ```
-The aad-pod-identity controller ensures that a managed identity can be assigned to your pod or deployment. It ensures that each call to the managed identity endpoint (MSI endpoint) is redirected to the aad-pod-identity's Node Managed Identity. Node Managed Identity is a daemon set deployed to the Kubernetes cluster. It forwards the request to the aad-pod-identity's Managed Identity Controller to query the managed identity to use for the pod or deployment and returns a token. All you need to to ds to specify a Kubernetes resource that describes your managed identity to use and a binding to assign the identity to your pod or deployment.
+The aad-pod-identity controller ensures that a managed identity can be assigned to your pod or deployment. It ensures that each call to the managed identity endpoint (MSI endpoint) is redirected to the aad-pod-identity's Node Managed Identity. Node Managed Identity is a daemon set deployed to the Kubernetes cluster. It forwards the request to the aad-pod-identity's Managed Identity Controller to query the managed identity to use for the pod or deployment and returns a token. All you need to do is to specify a Kubernetes resource that describes your managed identity to use and a binding to assign the identity to your pod or deployment.
 
 __AzureIdentity__ resource:
 ```yaml
