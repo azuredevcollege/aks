@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
-namespace: dapr-secrets
 metadata:
+  namespace: dapr-secrets
   name: api-aspnetcore-daprdotnetsdk
   labels:
     app: dapr-secrets

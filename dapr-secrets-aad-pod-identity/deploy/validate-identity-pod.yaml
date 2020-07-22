@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
-namespace: dapr-secrets
 metadata:
+  namespace: dapr-secrets
   name: demo
   labels:
     aadpodidbinding: $IDENTITY_NAME

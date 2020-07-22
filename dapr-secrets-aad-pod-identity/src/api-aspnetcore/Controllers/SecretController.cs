@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
@@ -29,7 +31,10 @@ namespace api_aspnetcore.Controllers
                     return StatusCode((int)HttpStatusCode.InternalServerError);
                 }
 
-                var secretOne = await result.Content.ReadAsStringAsync();
+                var json = await result.Content.ReadAsStringAsync();
+                System.Console.WriteLine(json);
+                var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+                var secretOne = dict[_secretOne];
 
                 result = await client.GetAsync($"{_secretsUrl}/{_secretStoreName}/{_secretTwo}");
 
@@ -38,9 +43,11 @@ namespace api_aspnetcore.Controllers
                     return StatusCode((int)HttpStatusCode.InternalServerError);
                 }
 
-                var secretTwo = await result.Content.ReadAsStringAsync();
+                json = await result.Content.ReadAsStringAsync();
+                dict = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+                var secretTwo = dict[_secretTwo];
 
-                return Ok($"SecretOne: {secretOne} | SecretTwo: {secretTwo}");
+                return Ok($"Result from aspnetcore API: SecretOne: {secretOne} | SecretTwo: {secretTwo}");
             }
             catch (Exception ex)
             {

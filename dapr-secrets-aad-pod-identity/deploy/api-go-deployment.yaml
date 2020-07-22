@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   namespace: dapr-secrets
-  name: api-aspnetcore
+  name: api-go
   labels:
     app: dapr-secrets
 spec:
@@ -10,21 +10,23 @@ spec:
   selector:
     matchLabels:
       app: dapr-secrets
-      api: aspnetcore
+      api: go
   template:
     metadata:
       labels:
         app: dapr-secrets
-        api: aspnetcore
+        api: go
         aadpodidbinding: $IDENTITY_NAME
       annotations:
         dapr.io/enabled: "true"
-        dapr.io/id: "api-aspnetcore"
+        dapr.io/id: "api-go"
         dapr.io/port: "5000"
     spec:
       containers:
-        - name: api-aspnetcore
-          image: m009/dapr-secret-api-dotnetcore:0.1
+        - name: api-go
+          image: m009/dapr-secret-api-go:0.2
           ports:
             - containerPort: 5000
           imagePullPolicy: Always
+          args:
+          - ./api
