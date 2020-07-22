@@ -366,3 +366,109 @@ The path parameter _secretStoreName is the name of the dapr secretstore that is 
         }
     }
 ```
+
+## Add another API that is implemented in GO
+
+ASP.NET Core is of course not the only framework to build an API and host it in AKS. To complete the story I want to show you how an API, which is implemented in GO, can be deployed to AKS with a dapr injected sidecar. There is no need to get into another integration library to access secrets stored in an Azure Key Vault. All you have to do is to call the dapr secretstore API over HTTP. And that is exactly what dapr makes so powerfull.
+Let us have a look at the source code, which you can find [here](./src/api-go/pkg/http/api.go):
+
+```Go
+const (
+	...
+	daprSecretURL   = "http://localhost:3500/v1.0/secrets"
+	secretStoreName = "azurekeyvault"
+	secretOne       = "secretone"
+	secretTwo       = "secretTwo"
+)
+...
+
+func (s *api) onGetSecrets(c *routing.Context) error {
+	baseURL := fmt.Sprintf("%s/%s", daprSecretURL, secretStoreName)
+
+	secretOneURL := fmt.Sprintf("%s/%s", baseURL, secretOne)
+	secretTwoURL := fmt.Sprintf("%s/%s", baseURL, secretTwo)
+
+	// query first value
+	resp, err := http.Get(secretOneURL)
+
+	if err != nil {
+		c.Response.SetStatusCode(500)
+		c.Response.SetBody([]byte(err.Error()))
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		c.Response.SetStatusCode(500)
+		c.Response.SetBody([]byte(err.Error()))
+		return err
+	}
+
+	tmp := make(map[string]string)
+	err = json.Unmarshal(body, &tmp)
+	if err != nil {
+		c.Response.SetStatusCode(500)
+		c.Response.SetBody([]byte(err.Error()))
+		return err
+	}
+
+	vauleOne := tmp[secretOne]
+
+	// query second value
+	resp2, err := http.Get(secretTwoURL)
+
+	if err != nil {
+		c.Response.SetStatusCode(500)
+		c.Response.SetBody([]byte(err.Error()))
+		return err
+	}
+
+	defer resp2.Body.Close()
+
+	body2, err := ioutil.ReadAll(resp2.Body)
+	if err != nil {
+		c.Response.SetStatusCode(500)
+		c.Response.SetBody([]byte(err.Error()))
+		return err
+	}
+
+	tmp = make(map[string]string)
+	err = json.Unmarshal(body2, &tmp)
+	if err != nil {
+		c.Response.SetStatusCode(500)
+		c.Response.SetBody([]byte(err.Error()))
+		return err
+	}
+
+	vauleTwo := tmp[secretTwo]
+
+	result := fmt.Sprintf("Result from Go API: secretOne %s | secretTwo: %s", vauleOne, vauleTwo)
+
+	c.Response.SetStatusCode(200)
+	c.Response.SetBody([]byte(result))
+	return nil
+}
+```
+
+A simple http call is sufficient to read a secret from the Azure Key Vault.
+
+Let us deploy the API to the AKS cluster. Open the file [api-go-deployment.yaml](./deploy/api-go-deployment.yaml) and replace the $ marked values first. After that use the following kubectl command to deploy the API:
+
+```Shell
+kubctl apply -f api-go-deployment.yaml -n dapr-secrets
+```
+
+The Kubernetes service which was deployed in one of the previous step will route the traffic to both APIs (ASP.NET Core and GO). Open your browser again and navigate to http://<service ip>/secret and try to refresh the page.
+You should alternately see one of the following outputs:
+
+```Shell
+Result from Go API: secretOne valueone | secretTwo: valuetwo
+```
+or
+```Shell
+Result from aspnetcore API: SecretOne: valueone | SecretTwo: valuetwo
+```
+
+## Use dapr secretstore to authorize access to Azure resources for dapr components
