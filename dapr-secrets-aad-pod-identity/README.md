@@ -54,13 +54,13 @@ metadata:
     aadpodidbinding: myidentityname
 ```
 
-## Demo scenario overview
+### Demo scenario overview
 
 In the demo scenario we deploy a simple application that returns secrets stored in an Azure KeyVault. We use an Azure managed identity that has read access to an Azure Key Vault instance and the instance is accessed on behalf-of the managed identity. As we don't want to acquire a token in our code, we use a dapr secretstore component and invoke the dapr sidecar container to query the Azure Key Vault. Acquiring a token is done by calling the managed identity service endpoint that is controlled by aad-pod-identity.
 
 ![Overview](./images/overview.png)
 
-## Create a resource group
+### Create a resource group
 
 All resources are deployed to a resource group that we have to create first:
 
@@ -68,11 +68,11 @@ All resources are deployed to a resource group that we have to create first:
 az group create -n $RESOURCE_GROUP -l $RESOURCE_LOCATION
 ```
 
-## Setup an AKS cluster
+### Setup an AKS cluster
 
 Before we can deploy the components to an AKS cluster we need to setup an AKS Cluster with --enabled-managed-identity. I want to show you aad-pod-identity and dapr secretsstore with an AKS cluster that uses a managed identity. An AKS cluster requires an identity to create additional resources like load balancer, public IP, etc. This identity can either be a managed identity or a service principal. If we use a managed identity, the identity will be created for you. As described above, using a managed identity is the better choice, because you don't have to manage the a service prinicpal which must be renewed to keep the cluster working. 
 
-## Variables
+### Variables
 
 Before we start, we need a set of variables:
 
@@ -93,7 +93,7 @@ az aks create -n $CLUSTER_NAME -g $RESOURCE_GROUP --enable-managed-identity
 
 When your cluster is created, check the managed cluster resource group. There is a managed identity named $CLUSTER_NAME-agentpool. 
 
-## Create a managed identity
+### Create a managed identity
 
 Next, we create a managed identity that is used to access an Azure Key Vault later:
 
@@ -104,7 +104,7 @@ export IDENTITY_RESOURCE_ID="$(az identity show -g $RESOURCE_GROUP -n $IDENTITY_
 export IDENTITY_OBJECT_ID="$(az ad sp show --id $IDENTITY_CLIENT_ID --query objectId -otsv)"
 ```
 
-## Assign 'Managed Identity Operator' role to Kubernetes ServicePrincipal
+### Assign 'Managed Identity Operator' role to Kubernetes ServicePrincipal
 
 Now we need to give the AKS Cluster's managed identity rights to operate on the created managed identity.
 Do the following to get your principal id:
@@ -130,7 +130,7 @@ export CLUSTER_RESOURCE_GROUP=<your MC_ AKS Cluster resource group name>
 az role assignment create --role "Virtual Machine Contributor" --assignee $AKS_CLIENT_ID --scope /subscriptions/$SUBSCRIPTION_ID/resourcegroups/$CLUSTER_RESOURCE_GROUP
 ```
 
-## Install aad-pod-identity using helm
+### Install aad-pod-identity using helm
 
 Now everything is prepared to setup aad-pod-identity using helm. In this demo we create a namespace for the aad-pod-identity's operator and daemon set to separate them from our application:
 
@@ -152,7 +152,7 @@ helm repo update
 helm install aad-pod-identity aad-pod-identity/aad-pod-identity --namespace aad-pod-identity
 ```
 
-## Deploy AzureIdentity and AzureIdentityBinding
+### Deploy AzureIdentity and AzureIdentityBinding
 
 The sample application is deployed in its own namespace. To request an access token to access Azure resources from a pod, we need to deploy two Kubernetes Resources.
 __AzureIdentity__ is the resource to link to an existing Azure managed identity. To specify which managed identity a Pod should use to acquire an access token a selector that specifies the binding must be added to the pod. __AzureIdentityBinding__ defines the name of the selector and the binding to an __AzureIdentity__.
@@ -195,7 +195,7 @@ level=info msg="succesfully acquired a token using the MSI, msiEndpoint(http://1
 level=info msg="succesfully acquired a token, userAssignedID MSI, msiEndpoint(http://169.254.169.254/metadata/identity/oauth2/token) clientID(<client id>)" podip=<pod ip> podname=demo podnamespace=demo
 ```
 
-## Create an Azure key vault
+### Create an Azure key vault
 
 Create an Azure key vault instance in your resource group and assign needed policies to get and list secrets on behalf-of the managed identity:
 
@@ -211,7 +211,7 @@ az keyvault secret set --vault-name $KEYVAULT_NAME  --name secretone --value val
 az keyvault secret set --vault-name $KEYVAULT_NAME  --name secrettwo --value valuetwo
 ```
 
-## Install dapr
+### Install dapr
 
 Now it's time to install dapr. We deploy the dapr runtime into its own namespace using helm.
 
@@ -238,7 +238,7 @@ Once the chart installation is done, verify the Dapr operator pods are running i
 kubectl get pods --namespace dapr-system
 ```
 
-## Deploy the sample application
+### Deploy the sample application
 
 To let dapr know which Azure key vault is used, a dapr secretstore component must be deployed.
 
@@ -306,7 +306,7 @@ kubectl apply -f dapr-secrets-service.yaml -n dapr-secrets
 kubectl get service -n dapr-secrets
 ```
 
-## Test the demo application
+### Test the demo application
 
 After you have the public ip of the demo application's service, open your brwoser and naviagte http://<ip>/secret. You should see the following output:
 
@@ -314,7 +314,7 @@ After you have the public ip of the demo application's service, open your brwose
 SecretOne: {"secretone":"valueone"} | SecretTwo: {"secrettwo":"valuetwo"}
 ```
 
-## Investigate the source code
+### Investigate the source code
 
 The demo application simply invokes the dapr sidecar to query one secret after the other and returns the values.
 The dapr sidecar is listening on port 3500 and the secrets are read by specifying the following url:
@@ -454,6 +454,8 @@ func (s *api) onGetSecrets(c *routing.Context) error {
 
 A simple http call is sufficient to read a secret from the Azure Key Vault.
 
+### Deploy the GO API
+
 Let us deploy the API to the AKS cluster. Open the file [api-go-deployment.yaml](./deploy/api-go-deployment.yaml) and replace the $ marked values first. After that use the following kubectl command to deploy the API:
 
 ```Shell
@@ -472,3 +474,137 @@ Result from aspnetcore API: SecretOne: valueone | SecretTwo: valuetwo
 ```
 
 ## Use dapr secretstore to authorize access to Azure resources for dapr components
+
+The dapr secretstore can not only be used within your code to read secrets. Furthermore, you can use it in your dapr component definition itself to authorize access to Azure resources. Imagine you want to create a dapr output binding component based on Azure Service Bus Queues. In order to grant access to the Azure Service Bus Queue you have to specify the SharedAccessKey of your Service Bus instance. Of course you do not want to store this key as plain text in the component definition. Instead, you can refer to a dapr secretstore and specify the name of the secret to be used. This makes things round, because all secrets can be easily stored in the Azure Key Vault. 
+
+In one of my [previous](https://github.com/azuredevcollege/aks/tree/master/dapr-keda-azsbqueue) articles I wrote about dapr output and input bindings and I created a simple demo application that solved the producer consumer problem with dapr and Azure Service Bus Queues. To authorize the dapr binding component to access an Azure Service Bus instance I used kubernetes secrets. Now I want to show you how you can use a dapr secretstore component based on Azure Key Vault to authorize the dapr binding component based on Azure Service Bus Queues.
+
+The following yaml definition shows you how to define a dapr binding for an Azure ServiceBus Queue where the connection string is read from an Azure KeyVault:
+
+```yaml
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  namespace: dapr-secrets
+  name: message-queue
+spec:
+  type: bindings.azure.servicebusqueues
+  metadata:
+    - name: connectionString
+      secretKeyRef:
+        name: asbrootkey
+        key: asbrootkey
+    - name: queueName
+      value: "msgqueue"
+auth:
+  secretStore: azurekeyvault
+```
+
+To specify the needed connection string a reference to a secret key is used. In the example above the name of the key is __asbrootkey__. To indicate in which secretstore the key is located, the name of the dapr secretstore component is used. In this case "azurekeyvault", which is already set up in the AKS cluster in the previous steps.
+
+### Create an Azure Service Bus namespace and a queue
+
+```Shell
+export ASB_NAMESPACE_NAME=<your Azure Service Bus namespace name>
+export ASB_QUEUE_NAME=msgqueue
+```
+
+Create the ServiceBus namespace:
+
+```Shell
+az servicebus namespace create -n $ASB_NAMESPACE_NAME -g $RESOURCE_GROUP -l $RESOURCE_LOCATION --sku Basic
+```
+
+Query the access key:
+
+```Shell
+export ASB_ROOT_KEY=$(az servicebus namespace authorization-rule keys list -g $RESOURCE_GROUP --namespace-name $ASB_NAMESPACE_NAME --name RootManageSharedAccessKey --query primaryConnectionString -o tsv)
+```
+
+Create a ServiceBus Queue:
+
+```Shell
+az servicebus queue create -n $ASB_QUEUE_NAME -g $RESOURCE_GROUP --namespace-name $ASB_NAMESPACE_NAME
+```
+
+### Store the ServiceBus secrets in Azure Key Vault
+
+Now we can store the needed secrets in the Azure Key Vault instance that we created previously:
+
+```Shell
+az keyvault secret set --vault-name $KEYVAULT_NAME  --name asbrootkey --value $ASB_ROOT_KEY
+```
+
+### Deploy the producer consumer sample application
+
+First the dapr binding component is deployed. You can find the definition producer-consumer-binding in the [deploy](./src/deploy) folder.
+
+```Shell
+kubectl apply -f producer-consumer-binding-yaml -n daspr-secrets
+```
+
+After that open the [producer-deployment.yaml](./src/../deploy/producer-deployment.yaml) and replace all $ marked values and deploy it:
+
+```Shell
+kubectl apply -f producer-deployment.yaml -n dapr-secrets
+```
+
+In the deployment definition a label is specified to bind the pod to an __AzureIdentity__ that is already created.
+
+```yaml
+  template:
+    metadata:
+      labels:
+        app: producer
+        aadpodidbinding: $IDENTITY_NAME
+```
+
+Now check the dapr sidecar's logs for any error:
+
+```Shell
+kubectl logs -l app=producer -c daprd -n dapr-secrets
+```
+
+After that open the [consumer-deployment.yaml](./src/../deploy/consumer-deployment.yaml) and replace all $ marked values and deploy it:
+
+```Shell
+kubectl apply -f consumer-deployment.yaml -n dapr-secrets
+```
+
+Now check the dapr sidecar's logs for any error:
+
+```Shell
+kubectl logs -l app=consumer -c daprd -n dapr-secrets
+```
+
+### Test the sample application
+
+Before you can test the application we need the public ip of the producer service:
+
+```Shell
+kubectl get service -n dapr-secrets
+```
+
+Open a browser and navigate to http://<producer ip>. In the Swagger UI execute a POST request and create 10 messages.
+![Swagger](./images/swagger.png)
+
+Check the consumer's log output:
+
+```Shell
+kubectl logs -l app=consumer -c consumer -n dapr-secrets
+
+Hello World -- Received at: 07/23/2020 12:34:09 -- Finished at: 07/23/2020 12:34:14
+Hello World -- Received at: 07/23/2020 12:34:14 -- Finished at: 07/23/2020 12:34:19
+Hello World -- Received at: 07/23/2020 12:34:19 -- Finished at: 07/23/2020 12:34:24
+Hello World -- Received at: 07/23/2020 12:34:24 -- Finished at: 07/23/2020 12:34:29
+Hello World -- Received at: 07/23/2020 12:34:29 -- Finished at: 07/23/2020 12:34:34
+Hello World -- Received at: 07/23/2020 12:34:34 -- Finished at: 07/23/2020 12:34:39
+Hello World -- Received at: 07/23/2020 12:34:39 -- Finished at: 07/23/2020 12:34:44
+Hello World -- Received at: 07/23/2020 12:34:45 -- Finished at: 07/23/2020 12:34:50
+Hello World -- Received at: 07/23/2020 12:34:50 -- Finished at: 07/23/2020 12:34:55
+Hello World -- Received at: 07/23/2020 12:34:55 -- Finished at: 07/23/2020 12:35:00
+```
+
+## Summary
+
+With Azure KeyVault in a dapr secretstore component it is possible to store all necessary secrets centrally and access them even within the dapr component definition. Developers only program against the dapr components and do not need to keep any secrets in the code or implement code that accesses a KeyVault. 
