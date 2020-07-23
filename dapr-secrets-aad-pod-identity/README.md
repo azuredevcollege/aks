@@ -585,7 +585,7 @@ Before you can test the application we need the public ip of the producer servic
 kubectl get service -n dapr-secrets
 ```
 
-Open a browser and navigate to http://<producer ip>. In the Swagger UI execute a POST request and create 10 messages.
+Open a browser and navigate to http://your_service_ip . In the Swagger UI execute a POST request and create 10 messages.
 ![Swagger](./images/swagger.png)
 
 Check the consumer's log output:
@@ -607,4 +607,4 @@ Hello World -- Received at: 07/23/2020 12:34:55 -- Finished at: 07/23/2020 12:35
 
 ## Summary
 
-With Azure KeyVault in a dapr secretstore component it is possible to store all necessary secrets centrally and access them even within the dapr component definition. Developers only program against the dapr components and do not need to keep any secrets in the code or implement code that accesses a KeyVault. 
+With Azure KeyVault in a dapr secretstore component it is possible to store all necessary secrets centrally and access them even within the dapr component definition. Developers only program against the dapr components and do not need to keep any secrets in the code or implement code that accesses a KeyVault directly. 
