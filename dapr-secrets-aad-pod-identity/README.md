@@ -346,7 +346,10 @@ The path parameter _secretStoreName is the name of the dapr secretstore that is 
                     return StatusCode((int)HttpStatusCode.InternalServerError);
                 }
 
-                var secretOne = await result.Content.ReadAsStringAsync();
+                var json = await result.Content.ReadAsStringAsync();
+                System.Console.WriteLine(json);
+                var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+                var secretOne = dict[_secretOne];
 
                 result = await client.GetAsync($"{_secretsUrl}/{_secretStoreName}/{_secretTwo}");
 
@@ -355,9 +358,11 @@ The path parameter _secretStoreName is the name of the dapr secretstore that is 
                     return StatusCode((int)HttpStatusCode.InternalServerError);
                 }
 
-                var secretTwo = await result.Content.ReadAsStringAsync();
+                json = await result.Content.ReadAsStringAsync();
+                dict = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+                var secretTwo = dict[_secretTwo];
 
-                return Ok($"SecretOne: {secretOne} | SecretTwo: {secretTwo}");
+                return Ok($"Result from aspnetcore API: SecretOne: {secretOne} | SecretTwo: {secretTwo}");
             }
             catch (Exception ex)
             {
@@ -540,7 +545,7 @@ az keyvault secret set --vault-name $KEYVAULT_NAME  --name asbrootkey --value $A
 First the dapr binding component is deployed. You can find the definition producer-consumer-binding in the [deploy](./src/deploy) folder.
 
 ```Shell
-kubectl apply -f producer-consumer-binding-yaml -n daspr-secrets
+kubectl apply -f producer-consumer-binding-yaml -n dapr-secrets
 ```
 
 After that open the [producer-deployment.yaml](./src/../deploy/producer-deployment.yaml) and replace all $ marked values and deploy it:
