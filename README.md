@@ -12,3 +12,4 @@ Consider this as a constant "work-in-progress" repository.
 - [Containerized DNS forwarder to resolve Azure resources from outside the network](containerized-dns-forwarder/README.md)
 - [Azure Service Operator - manage your Azure resources with Kubernetes](azure-service-operator/README.md)
 - [Dapr and KEDA - Producer Consumer Problem with Azure ServiceBus Queue](dapr-keda-azsbqueue/README.md)
+- [Access Azure KeyVault using dapr secretstore and aad-pod-identity](./dapr-secrets-aad-pod-identity/README.md)
