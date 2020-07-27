@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: dapr-secrets
+  name: api-aspnetcore-daprdotnetsdk
+  labels:
+    app: dapr-secrets
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dapr-secrets
+      api: api-aspnetcore-daprdotnetsdk
+  template:
+    metadata:
+      labels:
+        app: dapr-secrets
+        api: api-aspnetcore-daprdotnetsdk
+        aadpodidbinding: $IDENTITY_NAME
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/id: "api-aspnetcore-daprdotnetsdk"
+        dapr.io/port: "5000"
+    spec:
+      containers:
+        - name: api-aspnetcore-daprdotnetsdk
+          image: m009/dapr-secret-api-dotnetcore:0.1
+          ports:
+            - containerPort: 5000
+          imagePullPolicy: Always

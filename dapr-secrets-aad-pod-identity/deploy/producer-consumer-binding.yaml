@@ -1,0 +1,16 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  namespace: dapr-secrets
+  name: message-queue
+spec:
+  type: bindings.azure.servicebusqueues
+  metadata:
+    - name: connectionString
+      secretKeyRef:
+        name: asbrootkey
+        key: asbrootkey
+    - name: queueName
+      value: "msgqueue"
+auth:
+  secretStore: azurekeyvault

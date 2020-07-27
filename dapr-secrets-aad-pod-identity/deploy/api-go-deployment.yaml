@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: dapr-secrets
+  name: api-go
+  labels:
+    app: dapr-secrets
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dapr-secrets
+      api: go
+  template:
+    metadata:
+      labels:
+        app: dapr-secrets
+        api: go
+        aadpodidbinding: $IDENTITY_NAME
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/id: "api-go"
+        dapr.io/port: "5000"
+    spec:
+      containers:
+        - name: api-go
+          image: m009/dapr-secret-api-go:0.2
+          ports:
+            - containerPort: 5000
+          imagePullPolicy: Always
+          args:
+          - ./api

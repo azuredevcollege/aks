@@ -1,0 +1,8 @@
+apiVersion: "aadpodidentity.k8s.io/v1"
+kind: AzureIdentityBinding
+metadata:
+  namespace: dapr-secrets
+  name: $IDENTITY_NAME-binding
+spec:
+  azureIdentity: $IDENTITY_NAME
+  selector: $IDENTITY_NAME
