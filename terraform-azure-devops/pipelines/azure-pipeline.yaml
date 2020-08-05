@@ -1,0 +1,15 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- script: echo Hello, world!
+  displayName: 'Run a one-line script'
+
+- script: |
+    echo Pipeline is running
+    echo And here is the value of our pipeline variable
+    echo $(mypipelinevar)
+  displayName: 'Run a multi-line script'

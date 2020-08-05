@@ -1,10 +1,10 @@
-# Welcome! ##
+# Welcome
 
 In this repository, we would like to share samples from the Kubernetes / Azure Kubernetes Service (AKS) space. Feel free to fork it and create a pull request, if you want to add content to it.
 
 Consider this as a constant "work-in-progress" repository.
 
-## Available Samples ##
+## Available Samples
 
 - [Getting started with Windows Containers on AKS](windows-containers-get-started/README.md)
 - [Horizontal Autoscaling with Custom Metrics](hpa-custom-metrics/README.md)
@@ -13,3 +13,4 @@ Consider this as a constant "work-in-progress" repository.
 - [Azure Service Operator - manage your Azure resources with Kubernetes](azure-service-operator/README.md)
 - [Dapr and KEDA - Producer Consumer Problem with Azure ServiceBus Queue](dapr-keda-azsbqueue/README.md)
 - [Access Azure KeyVault using dapr secretstore and aad-pod-identity](./dapr-secrets-aad-pod-identity/README.md)
+- [Terraform Azure DevOps Provider](./terraform-azure-devops/README.md)

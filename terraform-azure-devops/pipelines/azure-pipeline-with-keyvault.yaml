@@ -1,0 +1,16 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+- group: kvintegratedvargroup
+
+steps:
+- script: echo Hello, world!
+  displayName: 'Run a one-line script'
+
+- script: |
+    echo KeyVault secret value: $(kvmysupersecretsecret)
+  displayName: 'Run a multi-line script'
