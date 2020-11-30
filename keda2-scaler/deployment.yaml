@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kedaconsumer-deploy
+  labels:
+    application: kedaconsumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      application: kedaconsumer
+  template:
+    metadata:
+      labels:
+        application: kedaconsumer
+    spec:
+      containers:
+        - name: application
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          image: csaocpger/queueconsumer:1.0
+          env:
+            - name: QCONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: consumersecrets
+                  key: QCONNECTION
+          imagePullPolicy: IfNotPresent
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: azure-queue-scaledobject
+  namespace: default
+spec:
+  scaleTargetRef:
+    name: kedaconsumer-deploy
+  triggers:
+    - type: azure-queue
+      metadata:
+        # Required
+        queueName: keda
+        # Required: connection OR authenticationRef that defines connection
+        connectionFromEnv: QCONNECTION
+        queueLength: "5"
