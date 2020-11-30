@@ -1,4 +1,4 @@
-# Run th sample
+# Run the sample
 
 ## Install KEDA 2.0
 
@@ -54,7 +54,7 @@ spec:
           imagePullPolicy: IfNotPresent
 ```
 
-Add the Scaler:
+Add the Scaler Object:
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
